@@ -81,7 +81,7 @@ public class DroneCommunicator extends Thread {
 
 
     public boolean isConnected(){
-    return connected;
+        return connected;
     }
 
     public Handler getBTHandler() {
@@ -129,7 +129,7 @@ public class DroneCommunicator extends Thread {
                     tempBTSocket.connect();
                 } catch (IOException e) {
                     if (tempBTSocket != null) {
-                       sendState(PAIRED_BUT_NOT_CONNECTABLE);
+                        sendState(PAIRED_BUT_NOT_CONNECTABLE);
                     }
                     return;
                 }
@@ -166,22 +166,22 @@ public class DroneCommunicator extends Thread {
      * Todo: Add Handling of messages from Drone
      */
     private boolean receiveBytes(){
-           int receivedBytes = 0;
-           int bytes = 0;
-           byte[] buffer = new byte[128];
-           if (mXMCInputStream != null) {
-               try {
-                   while (mXMCInputStream.available() > 0) {
-                       bytes = mXMCInputStream.read(buffer);
-                       receivedBytes += bytes;
-                   }
-                } catch (IOException e) {
-                   sendState(LOST_BLUETOOTH);
+        int receivedBytes = 0;
+        int bytes = 0;
+        byte[] buffer = new byte[128];
+        if (mXMCInputStream != null) {
+            try {
+                while (mXMCInputStream.available() > 0) {
+                    bytes = mXMCInputStream.read(buffer);
+                    receivedBytes += bytes;
                 }
-               if (receivedBytes == 0) {
-                    return false;
-               }
-           }
+            } catch (IOException e) {
+                sendState(LOST_BLUETOOTH);
+            }
+            if (receivedBytes == 0) {
+                return false;
+            }
+        }
         return true;
     }
 

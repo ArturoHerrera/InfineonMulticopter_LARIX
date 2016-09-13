@@ -32,7 +32,9 @@ public class VisualisationView extends SurfaceView implements SurfaceHolder.Call
 
         //reference to itself
         private AnimationThread mAnimationThread;
+        private Drawable mDrawObject;
         private Drawable mObject;
+        private Drawable mTapObject;
         private Bitmap mBackgroundImage;
         private SurfaceHolder mSurfaceHolder;
         private int mElapsedSinceDraw = 0;
@@ -47,6 +49,7 @@ public class VisualisationView extends SurfaceView implements SurfaceHolder.Call
             mainActivity = (MainActivity) context;
             Resources res = context.getResources();
             mObject = context.getResources().getDrawable(R.drawable.quadro);
+            mTapObject = context.getResources().getDrawable(R.drawable.quadro_tap);
             mBackgroundImage = BitmapFactory.decodeResource(res,
                     R.drawable.background_2);
             mSensorValues = new float[] {(float)0.0,(float)0.0,(float)0.0};
@@ -107,6 +110,12 @@ public class VisualisationView extends SurfaceView implements SurfaceHolder.Call
                 if (mObject != null && mCanvas != null && mBackgroundImage != null){
                     mCanvas.drawBitmap(mBackgroundImage, 0, 0, null);
 
+                    if(mainActivity.isConnected()){
+                        mDrawObject = mObject;
+                    }else{
+                        mDrawObject = mTapObject;
+                    }
+
                     distLeft = (int)(((-sensorvalues[0]+90.f) / 180.f) * (float)measuredSize[1]) - COPTER_SIZE / 2;
                     distTop = (int)(((sensorvalues[1]+90.f) / 180.f) * (float)measuredSize[0]) - COPTER_SIZE / 2;
                     distRight = (int)(((-sensorvalues[0]+90.f) / 180.f) * (float)measuredSize[1]) + COPTER_SIZE / 2;
@@ -132,11 +141,13 @@ public class VisualisationView extends SurfaceView implements SurfaceHolder.Call
                         distTop = mCanvas.getHeight() - COPTER_SIZE;
                     }
 
-                    mObject.setBounds(distLeft, distTop,distRight, distBottom);
-                    mObject.draw(mCanvas);
+                    mDrawObject.setBounds(distLeft, distTop,distRight, distBottom);
+                    mDrawObject.draw(mCanvas);
                 }
             }
         }
+
+
         private boolean updateTime(){
             long current_time = System.currentTimeMillis();
             if((current_time - mLastTimeMeasure) > REFRESH_RATE)
@@ -175,7 +186,6 @@ public class VisualisationView extends SurfaceView implements SurfaceHolder.Call
         switch(event.getAction()) {
             //press and release
             case MotionEvent.ACTION_UP:
-                //mObject.setBounds(distLeft, distTop,distRight, distBottom);
                 int x =  (int)event.getX();
                 int y = (int)event.getY();
                 if(x < distRight && x > distLeft){

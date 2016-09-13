@@ -22,11 +22,12 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.List;
 
-public class MainActivity extends Activity implements SurfaceHolder.Callback, SensorEventListener, View.OnClickListener, View.OnTouchListener,SeekBar.OnSeekBarChangeListener {
+public class MainActivity extends Activity implements SurfaceHolder.Callback, SensorEventListener, View.OnClickListener, View.OnTouchListener, SeekBar.OnSeekBarChangeListener {
 
     private static final String DEBUG_TAG = "DEBUG";
     private static final int SLIDER_SPEED_MS = 40;
@@ -46,6 +47,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Se
     private Button mHeightControlButton;
     private Button mYawTrimRight;
     private Button mYawTrimLeft;
+    private TextView mCurrentVelocityDisplay;
     private DroneCommunicator mDroneCommunicator;
     private SensorManager mSensorManager;
     private SensorFusion mSensorFusion;
@@ -187,6 +189,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Se
         mDroneCommunicator.start();
     }
 
+    public DroneCommunicator getDroneCommunicator() {
+        return mDroneCommunicator;
+    }
+
     public void stopDroneCommunicator() {
         if (mDroneCommunicator != null) {
             clearHandlerMessageQueue();
@@ -267,8 +273,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Se
                             if (shouldSend()) {
                                 mControlPacket.setRoll(mSensorValues[1]);
                                 mControlPacket.setPitch(mSensorValues[0]);
-                                mControlPacket.setAzimuth((float) mSeekBarYaw.getScaledValue()+mYawOffset);
+                                mControlPacket.setAzimuth((float) mSeekBarYaw.getScaledValue() + mYawOffset);
                                 mControlPacket.setSpeed((byte) mSeekBarTrottle.getScaledValue());
+                                mControlPacket.setHeightcontrol((byte)Boolean.compare(mHeightControlActivated,false));
                                 sendBTControlPacket(mControlPacket, DroneCommunicator.SEND_CONTROL_DATA);
                             }
                         }
@@ -330,10 +337,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Se
         mSeekBarYaw.setScaledValue(0);
         mSeekBarYaw.setStartPos(0);
         mYawTrimRight = (Button) findViewById(R.id.buttonRight);
-        mYawTrimRight.setOnClickListener(this);
         mYawTrimRight.setOnTouchListener(this);
         mYawTrimLeft = (Button) findViewById(R.id.buttonLeft);
-        mYawTrimLeft.setOnClickListener(this);
         mYawTrimLeft.setOnTouchListener(this);
         mYawTrimBar = (SeekBar) findViewById(R.id.yawTrim);
         mYawTrimBar.setOnSeekBarChangeListener(this);
@@ -342,7 +347,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Se
         setSystemUIVisibility(mViewholder);
         //Get Reference to SurfaceView on which Visualisation takes place
         mSurfaceView = (SurfaceView) findViewById(R.id.visualisationView);
-        mSurfaceholder = (SurfaceHolder) mSurfaceView.getHolder();
+        mSurfaceholder = mSurfaceView.getHolder();
         mSurfaceholder.addCallback(this);
         mViewholder.setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
             @Override
@@ -359,19 +364,20 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Se
             new Runnable() {
                 @Override
                 public void run() {
-                    if(mYawRightDown){
+                    if (mYawRightDown) {
                         mYawTrimBar.setProgress(mYawTrimBar.getProgress() + (SLIDER_MID_VAL / SLIDER_BUTTON_STEP));
-                        mYawAdjustHandler.postDelayed(this,SLIDER_SPEED_MS);
+                        mYawAdjustHandler.postDelayed(this, SLIDER_SPEED_MS);
                     }
-                    if(mYawLeftDown){
+                    if (mYawLeftDown) {
                         mYawTrimBar.setProgress(mYawTrimBar.getProgress() - (SLIDER_MID_VAL / SLIDER_BUTTON_STEP));
-                        mYawAdjustHandler.postDelayed(this,SLIDER_SPEED_MS);
+                        mYawAdjustHandler.postDelayed(this, SLIDER_SPEED_MS);
                     }
                 }
             };
 
     /**
      * for Button Event Handling
+     *
      * @param v
      */
     public void onClick(View v) {
@@ -390,13 +396,14 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Se
 
     /**
      * Touch-Event Handling for Yaw-Trim Slider
+     *
      * @param v
      * @param event
      * @return
      */
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        if(event.getAction() == MotionEvent.ACTION_UP){
+        if (event.getAction() == MotionEvent.ACTION_UP) {
             switch (v.getId()) {
                 case R.id.buttonLeft:
                     mYawLeftDown = false;
@@ -408,15 +415,15 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Se
                     break;
             }
         }
-        if(event.getAction() == MotionEvent.ACTION_DOWN){
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
             switch (v.getId()) {
                 case R.id.buttonLeft:
                     mYawLeftDown = true;
-                    mYawAdjustHandler.postDelayed(doYawAdjust,SLIDER_SPEED_MS);
+                    mYawAdjustHandler.postDelayed(doYawAdjust, SLIDER_SPEED_MS);
                     break;
                 case R.id.buttonRight:
                     mYawRightDown = true;
-                    mYawAdjustHandler.postDelayed(doYawAdjust,SLIDER_SPEED_MS);
+                    mYawAdjustHandler.postDelayed(doYawAdjust, SLIDER_SPEED_MS);
                     break;
             }
         }
@@ -425,6 +432,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Se
 
     /**
      * for updating Yaw-Offset
+     *
      * @param seekBar
      * @param progress
      * @param fromUser
@@ -434,9 +442,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Se
         switch (seekBar.getId()) {
             case R.id.yawTrim:
                 if (progress < SLIDER_MID_VAL) {
-                    mYawOffset = (((float)(SLIDER_MID_VAL - progress)) / (float)SLIDER_MID_VAL * YAW_SCALE_MAX);
+                    mYawOffset = (((float) (SLIDER_MID_VAL - progress)) / (float) SLIDER_MID_VAL * YAW_SCALE_MAX);
                 } else {
-                    mYawOffset = (((float)(progress-SLIDER_MID_VAL)) / (float)SLIDER_MID_VAL * -YAW_SCALE_MAX);
+                    mYawOffset = (((float) (progress - SLIDER_MID_VAL)) / (float) SLIDER_MID_VAL * -YAW_SCALE_MAX);
                 }
                 break;
         }
@@ -498,7 +506,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Se
 
     }
 
-
     public void showToast(final String value) {
         runOnUiThread(new Runnable() {
             public void run() {
@@ -545,7 +552,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Se
             setSystemUIVisibility(getWindow().getDecorView());
         }
     };
-
 
 
 }
