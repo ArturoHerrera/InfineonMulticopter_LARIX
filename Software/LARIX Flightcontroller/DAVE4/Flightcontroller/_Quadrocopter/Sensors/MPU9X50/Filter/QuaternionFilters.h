@@ -67,6 +67,7 @@
 /* *****************************************************************************
 **                      Global Function Definitions                           **
 ***************************************************************************** */
+void MadgwickQuaternionUpdateWithouMag(float* q, float deltat, float a_x, float a_y, float a_z, float w_x, float w_y, float w_z);
 void MadgwickQuaternionUpdate(float* q, float deltat, float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz);
 void MahonyQuaternionUpdate(float* q, float* eInt, float deltat, float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz);
 /* *****************************************************************************

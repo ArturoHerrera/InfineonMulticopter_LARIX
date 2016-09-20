@@ -16,6 +16,7 @@
 /*
  * V0.0: 29-12-2014, AM:  Initial Version
  * V0.1: 21-07-2016, DW:  Port of SW from DAVE3 to DAVE4
+ * V0.2: 20.09.2016, RT:  Moved Setup in another folder
  */
 
 
@@ -67,6 +68,16 @@ CONTROLLERPOLYNOMIALS polynoms;/**< global structure for controler polynomials*/
 float pressure = 0.0f;/**< global variable for storing current pressure value*/
 float temperature = 0.0f;/**< global variable for storing current temperature value*/
 struct structFIR PressureFIR;/**< global struct for filtering pressure values*/
+float YPR[3];
+float powerD = 0.0f;/* throttle value of remote, range: 0 - 100*/
+float yawD_dot = 0.0f;/* yaw value of remote, range: -90 - +90*/
+float pitchD = 0.0f;/* pitchD value of remote, range: -30 - +30*/
+float rollD = 0.0f;/* rollD value of remote, range: -30 - +30*/
+float u_yaw_dot = 0.0f;/* output of angle-rate controller for yaw*/
+float u_pitch = 0.0f;/* output of angle controller for pitch*/
+float u_roll = 0.0f;/* output of angle controller for roll*/
+float PWM_percent[4];/* scaled motor power from controller output, range: 0 - 100*/
+uint8_t height_control = 0;/* for enabling height-control, activated: 0xff, disabled: 0x00*/
 
 #ifdef Plexi
 CONTROLLERPARAMETER parameter =
@@ -81,6 +92,34 @@ CONTROLLERPARAMETER parameter =
 		.D_pitch=1.7f,
 		.N_pitch=400.0f,
 		.P_yaw=200.0f
+};
+#elif defined HTL
+CONTROLLERPARAMETER parameter =
+{
+             .T=0.002f,
+             .P_roll=40.0f,
+             .I_roll=0.1f,
+             .D_roll=1.6f,
+             .N_roll=400.0f,
+             .P_pitch=40.0f,
+             .I_pitch=0.1f,
+             .D_pitch=1.6f,
+             .N_pitch=400.0f,
+             .P_yaw=100.0f
+};
+#elif defined Flatcopter
+CONTROLLERPARAMETER parameter =
+{
+             .T=0.002f,
+             .P_roll=35.0f,
+             .I_roll=0.1f,
+             .D_roll=1.2f,
+             .N_roll=400.0f,
+             .P_pitch=35.0f,
+             .I_pitch=0.1f,
+             .D_pitch=1.2f,
+             .N_pitch=400.0f,
+             .P_yaw=100.0f
 };
 #elif defined Carbon
 CONTROLLERPARAMETER parameter =
@@ -118,18 +157,8 @@ CONTROLLERPARAMETER parameter =
  */
 void Control_Timer_ISR(void)
 {
-	float YPR[3];
-	float powerD = 0.0f;/* throttle value of remote, range: 0 - 100*/
-	float yawD_dot = 0.0f;/* yaw value of remote, range: -90 - +90*/
-	float pitchD = 0.0f;/* pitchD value of remote, range: -30 - +30*/
-	float rollD = 0.0f;/* rollD value of remote, range: -30 - +30*/
 	static float x_pitch[CONTROL_ORDER];
 	static float x_roll[CONTROL_ORDER];
-	float u_yaw_dot = 0.0f;/* output of angle-rate controller for yaw*/
-	float u_pitch = 0.0f;/* output of angle controller for pitch*/
-	float u_roll = 0.0f;/* output of angle controller for roll*/
-	float PWM_percent[4];/* scaled motor power from controller output, range: 0 - 100*/
-	uint8_t height_control = 0;/* for enabling height-control, activated: 0xff, disabled: 0x00*/
 
 	GetAngles(YPR);
 	GetRCData(&powerD, &height_control, &yawD_dot, &pitchD, &rollD);
@@ -247,104 +276,4 @@ void CreatePulseWidth(float *u_phi, float *u_theta, float *u_psi_dot,float *u_ho
 
 	if (PWM_width[3] < saturationMin)
 		PWM_width[3] = saturationMin;
-}
-
- /**
- *  \brief This function initializes the hardware
- *
- *
- *  \details Sensors are set up, polynomials are calculated and other general preparations are made
- */
-void setup(void)
-{
-	initBluetoothStorage();//initialize space for variables used for Bluetooth Communication
-	//-------------------Dave Setup---------------------
-	DAVE_STATUS_t status;
-	status = DAVE_Init();//Initialization of DAVE APPs
-	if (status == DAVE_STATUS_FAILURE)
-	{
-		/* Placeholder for error handler code. The while loop below can be replaced with an user error handler. */
-		XMC_DEBUG("DAVE APPs initialization failed\n");
-		while (1U);
-	}
-	disableIRQ();//disables all Interrupts
-	delay(2000);//waits 2000ms
-	enableIRQ();//enables configurated Interrupts
-	setup_STATE_LEDs();//setup Status-LED's
-	WatchRC_Init();//initialize RC-Watchdog
-	setup_UART_Trigger_limits();//setup Trigger-Limits of UART-FIFO
-	PressureFIR = Initialize_FIR_Filter(PressureFIR, MOVING_AVERAGE);//initialize FIR Filter
-	setupDPS310I2C();//initialize DPS310
-    getCoefficients();//get Coefficients of DPS310
-    setupDPS310();//setup DPS Hardware
-
-	MPU9150_Setup();//configures the IMU
-	delay(3000);//wait 3000ms to wait for ESC's to startup
-	// initialize controller polynomials
-	polynoms.b_roll[0]=parameter.P_roll-parameter.I_roll*parameter.T-parameter.P_roll*parameter.N_roll*parameter.T+parameter.N_roll*parameter.I_roll*parameter.T*parameter.T+parameter.D_roll*parameter.N_roll;
-	polynoms.b_roll[1]=parameter.I_roll*parameter.T-2*parameter.P_roll+parameter.P_roll*parameter.N_roll*parameter.T-2*parameter.D_roll*parameter.N_roll;
-	polynoms.b_roll[2]=parameter.P_roll+parameter.D_roll*parameter.N_roll;
-	polynoms.a_roll[0]=1-parameter.N_roll*parameter.T;
-	polynoms.a_roll[1]=parameter.N_roll*parameter.T-2;
-
-	polynoms.b_pitch[0]=parameter.P_pitch-parameter.I_pitch*parameter.T-parameter.P_pitch*parameter.N_pitch*parameter.T+parameter.N_pitch*parameter.I_pitch*parameter.T*parameter.T+parameter.D_pitch*parameter.N_pitch;
-	polynoms.b_pitch[1]=parameter.I_pitch*parameter.T-2*parameter.P_pitch+parameter.P_pitch*parameter.N_pitch*parameter.T-2*parameter.D_pitch*parameter.N_pitch;
-	polynoms.b_pitch[2]=parameter.P_pitch+parameter.D_pitch*parameter.N_pitch;
-	polynoms.a_pitch[0]=1-parameter.N_pitch*parameter.T;
-	polynoms.a_pitch[1]=parameter.N_pitch*parameter.T-2;
-
-	TIMER_Start(&Control_Timer);//start Timer for Controller
-}
-/**
- *  \brief Function for setup of the pins for the Battery-LEDs on the LARIX-Board
- */
-void setup_STATE_LEDs(void)
-{
-	Control_P3_0(OUTPUT_PP_GP, VERYSTRONG);	//Configure Pin 3.0 -->BatteryState1 (See: _Quadrocopter/BatterySafety/BatterySafety.h)
-	Control_P3_1(OUTPUT_PP_GP, VERYSTRONG); //Configure Pin 3.1 -->BatteryState2
-	Control_P3_2(OUTPUT_PP_GP, VERYSTRONG); //Configure Pin 3.2 -->BatteryState3
-}
-
-/**
- *  \brief Function for setting the trigger limits
- *
- *  \details Receive FIFO trigger limit is configured for Bluetooth & the Remote Control
- *  \details When the FIFO filling level rises above the trigger limit -> Interrupt will be generated
- */
-void setup_UART_Trigger_limits(void)
-{
-	UART_SetRXFIFOTriggerLimit(&RemoteControl_Handle, 31);
-	UART_SetRXFIFOTriggerLimit(&Bluetooth_Handle, 18);
-}
-/**
- *  \brief Function for disabling all Interrupt-Service-Routines
- *  *
- *  \details This function disables all Interrupt-Service-Routines\n
- *  except the Util_Timer_ISR
- */
-void disableIRQ(void)
-{
-	INTERRUPT_Disable(&Control_Timer_ISR_Handle);
-	INTERRUPT_Disable(&GeneralPurpose_Timer_ISR_Handle);
-	INTERRUPT_Disable(&MagnetometerCal_Timer_ISR_Handle);
-	NVIC_DisableIRQ(backgnd_rs_intr_handle.node_id);//Disable ADC Interrupt
-	INTERRUPT_Disable(&DPS310_Ext_Int_ISR_Handle);
-	INTERRUPT_Disable(&MPU9X50_Ext_Int_ISR_Handle);
-	INTERRUPT_Disable(&DaisyChain_RX_ISR_Handle);
-	INTERRUPT_Disable(&Bluetooth_RX_ISR_Handle);
-	INTERRUPT_Disable(&RemoteControl_RX_ISR_Handle);
-}
-/**
- *  \brief Function for enabling all Interrupt-Service-Routines
- *
- *  \details This function enables all Interrupt-Service-Routines
- */
-void enableIRQ(void)
-{
-	INTERRUPT_Enable(&GeneralPurpose_Timer_ISR_Handle);
-	NVIC_EnableIRQ(backgnd_rs_intr_handle.node_id); //Enables ADC Interrupt
-	INTERRUPT_Enable(&Control_Timer_ISR_Handle);
-    INTERRUPT_Enable(&Bluetooth_RX_ISR_Handle);
-    INTERRUPT_Enable(&DPS310_Ext_Int_ISR_Handle);
-	INTERRUPT_Enable(&RemoteControl_RX_ISR_Handle);
 }

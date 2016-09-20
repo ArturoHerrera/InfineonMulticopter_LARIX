@@ -1,4 +1,16 @@
 /*******************************************************************************
+**
+**					LARIX Flight Controller Software Dave 4
+**				(compatible with Flight Controller App V1.1)
+**
+********************************************************************************/
+/*******************************************************************************
+**		Default Mode: RC controlled with switch for Bluetooth-App Control
+**		(for Bluetooth only Version "#define BT_ONLY" in the RCReceive.h)
+**
+*******************************************************************************/
+
+/*******************************************************************************
 **                      Author(s) Identity                                    **
 ********************************************************************************
 **                                                                            **
@@ -7,7 +19,7 @@
 ** AM           Andreas Mark                                                  **
 ** DW           Dominik Wieland                                               **
 ** ES           Elias Steurer                                                 **
-**                                                                            **
+** RT			Raffael Tschinder                                             **
 **                                                                            **
 *******************************************************************************/
 
@@ -15,15 +27,22 @@
 **                      Revision Control History                              **
 *******************************************************************************/
 /*
- * V0.0 : 25-12-2014, AM:  Initial Version
- * V0.0*: 15-08-2015, ES:  Minor Code-Changes
- * V0.1 : 21-07-2016, DW:  Port of SW from DAVE3 to DAVE4
+ * V0.00 : 25-12-2014, AM:  Initial Version
+ * V0.00*: 15-08-2015, ES:  Minor Code-Changes
+ * V0.01 : 21-07-2016, DW:  Port of SW from DAVE3 to DAVE4
+ * V0.02 : 12-09-2016, ES:  Micrium Debug Interface
+ * V0.03 : 14-09-2016, DW:  New MPU Files (MPU9250)
+ * V0.04 : 20.09-2016, RT:  Added I2C - TimeOut Counter,
+ * 							changed PWM Range (Daisy Chain) for PINUS v2.0,
+ * 							moved Setup from AttitudeControl to Setup folder
+ *
  */
 /*******************************************************************************
 **                      Includes                                              **
 *******************************************************************************/
 #include <DAVE.h>	//Declarations from DAVE Code Generation (includes SFR declaration)
 #include "_Quadrocopter/Attitude_Control/AttitudeController.h"
+#include "_Quadrocopter/Setup/Setup.h"
 
 /*******************************************************************************
 **                      Private Constant Definitions to be changed            **

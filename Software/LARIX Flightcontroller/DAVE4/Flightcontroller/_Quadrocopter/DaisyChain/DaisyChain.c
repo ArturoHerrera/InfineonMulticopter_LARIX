@@ -14,7 +14,8 @@
 **                      Revision Control History                              **
 *******************************************************************************/
 /*
- * V0.0: 15-09-2015, MAAN:  Initial Version
+ * V0.0: 15-09-2015, 	AM:  Initial Version
+ * V0.1: 19-09-2016, 	RT:	 Changed Range for PINUS Software v2.0
  */
  /*******************************************************************************
 **                      Includes                                              **
@@ -62,10 +63,10 @@
 *******************************************************************************/
 uint8_t DaisyTransmit[DAISY_BUFFER_SIZE]; /**< intern buffer for DaisyChain transmit data */
 
-uint16_t speedval1 = 0;/**< Motor 1 speed parameter Range: 0-1279	1279->Motorspeed=100% 0->Motorspeed=0% */
-uint16_t speedval2 = 0;/**< Motor 2 speed parameter Range: 0-1279   1279->Motorspeed=100% 0->Motorspeed=0% */
-uint16_t speedval3 = 0;/**< Motor 3 speed parameter Range: 0-1279   1279->Motorspeed=100% 0->Motorspeed=0% */
-uint16_t speedval4 = 0;/**< Motor 4 speed parameter Range: 0-1279   1279->Motorspeed=100% 0->Motorspeed=0% */
+uint16_t speedval1 = 0;/**< Motor 1 speed parameter Range: 0-65535	 65535->Motorspeed=100% 0->Motorspeed=0% */
+uint16_t speedval2 = 0;/**< Motor 2 speed parameter Range: 0-65535   65535->Motorspeed=100% 0->Motorspeed=0% */
+uint16_t speedval3 = 0;/**< Motor 3 speed parameter Range: 0-65535   65535->Motorspeed=100% 0->Motorspeed=0% */
+uint16_t speedval4 = 0;/**< Motor 4 speed parameter Range: 0-65535   65535->Motorspeed=100% 0->Motorspeed=0% */
 
 /*******************************************************************************
 **                      Global Function Definitions                           **
@@ -124,15 +125,15 @@ void SendDaisyStopCommand() //stops all motors
  *  
  *  \param [in] PWM_percentages pointer to an Array including the desired motor-speed in percent
  *  
- *  \details Calculates the values that need to be transmitted to the ESC out of the desired motorspeed stored in PWM percentages array.\n
+ *  \details Calculates the values that need to be transmitted to the ESC out of the desired motorspeed stored in PWM percentages array. Multiply with 65535 for PINUS v2.0, for older PINUS Software multiply with 1279. \n
  *  Starts: SendDaisyData function with set speed command.
  */
 void SendDaisyPWMPercentages(float *PWM_percentages) //calculates the values and sends command for setting motorspeed to each controller
 {
-	speedval1=(uint16_t)(*(PWM_percentages+2)/100.0f*1279.0f);
-	speedval2=(uint16_t)(*(PWM_percentages)/100.0f*1279.0f);
-	speedval3=(uint16_t)(*(PWM_percentages+1)/100.0f*1279.0f);
-	speedval4=(uint16_t)(*(PWM_percentages+3)/100.0f*1279.0f);
+	speedval1=(uint16_t)(*(PWM_percentages+2)/100.0f*65535.0f);		//65535.0f for PINUS Software V2.0, 1279.0f for Old PINUS Software
+	speedval2=(uint16_t)(*(PWM_percentages)/100.0f*65535.0f);
+	speedval3=(uint16_t)(*(PWM_percentages+1)/100.0f*65535.0f);
+	speedval4=(uint16_t)(*(PWM_percentages+3)/100.0f*65535.0f);
 
 	SendDaisyData(SET_REF_SPEED,speedval1,speedval2,speedval3,speedval4);
 }

@@ -34,9 +34,8 @@
 #include "../RemoteControl/RCReceive.h"
 #include "../_FIR_Filter/FIR_Filter.h"
 #include "../Sensors/DPS310/DPS310.h"
-#include "../Sensors/MPU9X50/MPU9150.h"
+#include "../Sensors/MPU9X50/MPU9250.h"
 #include "../_HAL/I2C/I2Cdev.h"
-#include "../Attitude_Control/AttitudeController.h"
 #include "../DaisyChain/DaisyChain.h"
 
 /*******************************************************************************
@@ -44,7 +43,9 @@
 *******************************************************************************/
 //Define which Frame is used:
 //#define Carbon
-#define Plexi
+//#define Plexi
+#define HTL
+//#define Flatcopter
 /*******************************************************************************
 **                      Private Macro Definitions                             **
 *******************************************************************************/
@@ -64,11 +65,11 @@ void Control_Timer_ISR(void);
 void AngleController(float *r, float *y, int n, const float *a, const float *b, float *x, float *u);
 void AngleRateController(float *r, float *y, const float *P, float *u);
 void CreatePulseWidth(float *u_phi, float *u_deta, float *u_psi_dot, float *u_hover, float *PWM_width);
-void setup(void);
-void setup_STATE_LEDs(void);
-void setup_UART_Trigger_limits(void);
-void disableIRQ(void);			//Disables all App-Controlled Interrupts
-void enableIRQ(void);			//Enables  all App-Controlled Interrupts
+//void setup(void);
+//void setup_STATE_LEDs(void);
+//void setup_UART_Trigger_limits(void);
+//void disableIRQ(void);			//Disables all App-Controlled Interrupts
+//void enableIRQ(void);			//Enables  all App-Controlled Interrupts
 
 
 /*******************************************************************************

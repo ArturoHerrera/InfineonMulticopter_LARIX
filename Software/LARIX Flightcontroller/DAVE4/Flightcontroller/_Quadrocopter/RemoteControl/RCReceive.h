@@ -39,7 +39,7 @@
 /*******************************************************************************
 **                      Private Constant Definitions to be changed            **
 *******************************************************************************/
-//#define BT_ONLY		//Only Bluetooth-App-Control needed
+#define BT_ONLY		//Only Bluetooth-App-Control needed
 
 
 /*******************************************************************************

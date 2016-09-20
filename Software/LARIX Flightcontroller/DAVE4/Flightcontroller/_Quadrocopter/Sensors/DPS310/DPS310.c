@@ -221,17 +221,17 @@ void updateValues(float *Pcomp,float *Tcomp)
 	if (x08>>4 == 15)						// read pressure register only if values are ready (==13 if pressure measurement; ==15 if pressure & temperature measurement
 	{
 		// generate Praw
-		Praw = getPressure();				// 24bit two�s complement value out of reg 0-2
-		if (Praw > (pow(2, 23) - 1))		// convert to signed int
+		Praw = getPressure();				// 24bit two's complement value out of reg 0-2
+		if (Praw > 8388607u)				// convert to signed int (Praw > (pow(2, 23) - 1))
 		{
-			Praw = Praw - pow(2, 24);
+			Praw = Praw - 16777216u;		//Praw - pow(2, 24)
 		}
 
 		// generate Traw
-		Traw = getTemperature();			// 24bit two�s complement value out of reg 3-5
-		if (Traw > (pow(2, 23) - 1))		// convert to signed int
+		Traw = getTemperature();			// 24bit two's complement value out of reg 3-5
+		if (Traw > 8388607u)				// convert to signed int (Traw > (pow(2, 23) - 1))
 		{
-			Traw = Traw - pow(2, 24);
+			Traw = Traw - 16777216u;		//Traw - pow(2, 24)
 		}
 
 		// calculate physical temperature Tcomp [�C]
@@ -275,7 +275,7 @@ void getCoefficients(void)
 	if (c30 > (pow(2, 15) - 1))	c30 = c30 - pow(2, 16);
 
 	//use some default values if coefficient registers are "empty"
-	if (c0 == 0 || c1 == 0 || c00 == 0 || c10 == 0 || c01 == 0 || c11 == 0 || c20 == 0 || c21 == 0 || c30 == 0)
+	if (c0 == 0 || c1 == 0 || c00 == 0 || c10 == 0 || c01 == 0 || c11 == 0 || c20 == 0 || c21 == 0 || c30 == 0 || c0 == -1 || c1 == -1 || c00 == -1 || c10 == -1 || c01 == -1 || c11 == -1 || c20 == -1 || c21 == -1 || c30 == -1)
 	{
 		c00 = 81507;
 		c10 = -66011;
