@@ -1,0 +1,6 @@
+2017-06-14 16:22:44,470 - INFO - Logger Initialized
+2017-06-14 16:22:44,474 - INFO - Thread-App-Status(ID: #1988293728) started
+2017-06-14 16:22:44,475 - INFO - Starting SPI RaspberryPI Configuration...
+2017-06-14 16:22:44,479 - INFO - SPI RaspberryPI Configuration Done
+2017-06-14 16:22:44,480 - INFO - Starting SPI Data transmission...
+2017-06-14 16:22:44,676 - INFO - Thread-App-Status(ID: #1988293728) terminated
