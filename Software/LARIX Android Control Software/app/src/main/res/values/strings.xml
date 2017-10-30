@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FlightController</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="yaw_trim">Yaw Trim</string>
+    <string name="radar_velocity">Radar Velocity:\u0020</string>
+    <string name="kph">km/h</string>
+    <string name="version_number">v1.01</string>
+</resources>
